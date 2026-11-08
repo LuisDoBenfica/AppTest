@@ -47,11 +47,21 @@
       .logo{width:26px;height:26px;display:grid;grid-template-columns:1fr 1fr;gap:2px;flex:none}
       .logo i{background:var(--accent);border-radius:2px}
       .sub{margin:0 0 10px;height:18px;line-height:18px;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden}
+      
+      /* Style du champ de recherche et de la croix */
+      .search-wrap{position:relative;display:block;width:100%;margin:0;}
       .search{
-        display:block;width:100%;height:44px;margin:0;padding:0 14px;border-radius:12px;border:1px solid var(--line);-webkit-appearance:none;appearance:none;
+        display:block;width:100%;height:44px;margin:0;padding:0 38px 0 14px;border-radius:12px;border:1px solid var(--line);-webkit-appearance:none;appearance:none;
         background:var(--card);color:var(--ink);font-size:16px;outline:none;
       }
       .search:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+      .clear-btn{
+        position:absolute;right:8px;top:50%;transform:translateY(-50%);
+        background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;
+        padding:0 8px;display:none;height:30px;line-height:28px;border-radius:8px;
+      }
+      .clear-btn:active{background:var(--accent-soft);color:var(--accent);}
+
       .chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:38px;gap:8px;height:130px;margin-top:10px}
       .chip{
         display:flex;align-items:center;justify-content:center;text-align:center;height:38px;
@@ -125,7 +135,12 @@
 <header>
   <h1><span class="logo"><i></i><i></i><i></i><i></i></span>Commandes Windows</h1>
   <p class="sub">Mémo administrateur</p>
-  <input class="search" id="q" type="search" placeholder="Rechercher (ex. dns, bitlocker, gpo)…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  
+  <div class="search-wrap">
+    <input class="search" id="q" type="search" placeholder="Rechercher (ex. dns, bitlocker, gpo)…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <button class="clear-btn" id="clear-btn" aria-label="Effacer">×</button>
+  </div>
+
   <nav class="chips">
     <a class="chip" href="#maj">Migration W11</a>
     <a class="chip" href="#info">Infos</a>
@@ -264,11 +279,11 @@
     <div class="cmd"><div class="row"><code>devmgmt.msc</code><button class="copy">Copier</button></div><p>Gestionnaire de périphériques.</p></div>
     <div class="cmd"><div class="row"><code>diskmgmt.msc</code><button class="copy">Copier</button></div><p>Gestion des disques.</p></div>
     <div class="cmd"><div class="row"><code>compmgmt.msc</code><button class="copy">Copier</button></div><p>Gestion de l'ordinateur (tout-en-un).</p></div>
-    <div class="cmd"><div class="row"><code>cntrl printers</code><button class="copy">Copier</button></div><p>Périphériques et imprimantes.</p></div>
     <div class="cmd"><div class="row"><code>services.msc</code><button class="copy">Copier</button></div><p>Services Windows.</p></div>
     <div class="cmd"><div class="row"><code>eventvwr.msc</code><button class="copy">Copier</button></div><p>Observateur d'événements.</p></div>
     <div class="cmd"><div class="row"><code>taskschd.msc</code><button class="copy">Copier</button></div><p>Planificateur de tâches.</p></div>
     <div class="cmd"><div class="row"><code>lusrmgr.msc</code><button class="copy">Copier</button></div><p>Utilisateurs et groupes locaux (éditions Pro et supérieures).</p></div>
+    <div class="cmd"><div class="row"><code>control printers</code><button class="copy">Copier</button></div><p>Périphériques et imprimantes.</p></div>
   </div>
 </details>
 </section>
@@ -280,8 +295,9 @@
 <script>
 (function(){
   document.documentElement.classList.add('js');
-  var q=document.getElementById('q'), empty=document.getElementById('empty');
+  var q=document.getElementById('q'), clearBtn=document.getElementById('clear-btn'), empty=document.getElementById('empty');
   var hdr=document.querySelector('header');
+  
   document.querySelectorAll('.chips a').forEach(function(a){
     a.addEventListener('click',function(e){
       var t=document.querySelector(a.getAttribute('href')); if(!t) return;
@@ -292,20 +308,32 @@
       window.scrollTo({top:Math.max(0,y),behavior:'smooth'});
     });
   });
+  
   var cmds=[].slice.call(document.querySelectorAll('.cmd'));
   var secs=[].slice.call(document.querySelectorAll('section'));
   function norm(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
   cmds.forEach(function(c){c._t=norm(c.textContent);});
-  q.addEventListener('input',function(){
+  
+  function updateSearch(){
     var v=norm(q.value.trim()), any=false;
-    cmds.forEach(function(c){var m=!v||c._t.indexOf(v)>-1;c.classList.join('hide',!m);});
+    clearBtn.style.display = v ? 'block' : 'none';
+    cmds.forEach(function(c){var m=!v||c._t.indexOf(v)>-1;c.classList.toggle('hide',!m);});
     secs.forEach(function(s){
       if(s.id==='maj'){var h=!!v;s.classList.toggle('hide',h);return;}
       var vis=s.querySelectorAll('.cmd:not(.hide)').length;
       s.classList.toggle('hide',!vis); if(vis){any=true; if(v) s.querySelector('details').open=true;}
     });
     empty.style.display=any?'none':'block';
+  }
+
+  q.addEventListener('input', updateSearch);
+  
+  clearBtn.addEventListener('click', function(){
+    q.value='';
+    updateSearch();
+    q.focus();
   });
+
   document.addEventListener('click',function(e){
     var b=e.target.closest('.copy'); if(!b) return;
     var t=b.parentNode.querySelector('code').textContent;
