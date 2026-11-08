@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon App PWA</title>
+    
+    <!-- Lien vers le manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Couleur de la barre de statut sur mobile -->
+    <meta name="theme-color" content="#317EFB">
+</head>
+<body>
+    <h1>Bienvenue sur ma WebApp !</h1>
+    <p>Cette application peut être installée sur votre écran d'accueil.</p>
+
+    <script>
+        // Enregistrement du Service Worker pour rendre l'app installable et gérable hors-ligne
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker enregistré !', reg))
+                    .catch(err => console.log('Erreur Service Worker :', err));
+            });
+        }
+    </script>
+</body>
+</html>
