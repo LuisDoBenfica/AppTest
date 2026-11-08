@@ -1,10 +1,12 @@
+
 {
-  "name": "Mon Application PWA",
-  "short_name": "MonApp",
-  "start_url": "/",
+  "name": "Commandes Windows",
+  "short_name": "Cmd Windows",
+  "start_url": "/AppTest/",
+  "scope": "/AppTest/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#317EFB",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
   "icons": [
     {
       "src": "icon-192.png",
