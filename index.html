@@ -331,7 +331,7 @@
   clearBtn.addEventListener('click', function(){
     q.value='';
     updateSearch();
-    q.focus();
+    q.blur(); // Retire le focus du champ et ferme instantanément le clavier iOS
   });
 
   document.addEventListener('click',function(e){
