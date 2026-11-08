@@ -1,21 +1,112 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon App PWA</title>
-    
-    <!-- Lien vers le manifest -->
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- Couleur de la barre de statut sur mobile -->
-    <meta name="theme-color" content="#317EFB">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cmd Windows">
+<meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
+<title>Commandes Windows</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#ffffff; --ink:#141a26; --muted:#5b6578; --line:#e3e7ef;
+    --accent:#0067c0; --accent-soft:#e6f0fa; --code-bg:#f0f2f7; --star:#c27c00; --star-soft:#fff4dc;
+    --ok:#1a7f37;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0b1220; --card:#131b2c; --ink:#e7ebf3; --muted:#93a0b8; --line:#222c40;
+      --accent:#4ca3f5; --accent-soft:#16263d; --code-bg:#0d1526; --star:#f2b13b; --star-soft:#2c2412;
+      --ok:#3fb950;
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+  /* Hauteur fixe de l'en-tête : 14+28+2+18+10+44+10+130+12+1 = 269px */
+  :root{--hh:calc(269px + env(safe-area-inset-top))}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+    padding:0 16px calc(32px + env(safe-area-inset-bottom));
+  }
+  header{
+    position:sticky; top:0; z-index:5; margin:0 -16px; padding:calc(14px + env(safe-area-inset-top)) 16px 12px;
+    background:color-mix(in srgb,var(--bg) 88%,transparent);
+    -webkit-backdrop-filter:saturate(1.6) blur(14px); backdrop-filter:saturate(1.6) blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  h1{margin:0 0 2px;height:28px;line-height:28px;font-size:22px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px;white-space:nowrap}
+  .logo{width:26px;height:26px;display:grid;grid-template-columns:1fr 1fr;gap:2px;flex:none}
+  .logo i{background:var(--accent);border-radius:2px}
+  .sub{margin:0 0 10px;height:18px;line-height:18px;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden}
+  .search{
+    display:block;width:100%;height:44px;margin:0;padding:0 14px;border-radius:12px;border:1px solid var(--line);-webkit-appearance:none;appearance:none;
+    background:var(--card);color:var(--ink);font-size:16px;outline:none;
+  }
+  .search:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:38px;gap:8px;height:130px;margin-top:10px}
+  .chip{
+    display:flex;align-items:center;justify-content:center;text-align:center;height:38px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    font-size:13px;font-weight:500;padding:0 4px;border-radius:10px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);text-decoration:none;line-height:1.2;
+  }
+  .chip:active{background:var(--accent-soft);border-color:var(--accent)}
+  main{max-width:720px;margin:0 auto}
+  section{margin-top:18px;scroll-margin-top:calc(var(--hh) + 12px)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  summary{
+    list-style:none;cursor:pointer;padding:14px 16px;font-weight:650;font-size:17px;
+    display:flex;align-items:center;gap:10px;
+  }
+  summary::-webkit-details-marker{display:none}
+  summary .ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--accent-soft);font-size:16px;flex:none}
+  summary .n{margin-left:auto;color:var(--muted);font-weight:500;font-size:13px}
+  summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:-4px 4px 0 6px;transition:transform .2s}
+  details[open] summary::after{transform:rotate(-135deg);margin-top:4px}
+  .list{border-top:1px solid var(--line)}
+  .cmd{padding:12px 16px;border-bottom:1px solid var(--line)}
+  .cmd:last-child{border-bottom:0}
+  .row{display:flex;align-items:flex-start;gap:8px}
+  code{
+    font:13.5px/1.4 ui-monospace,"SF Mono",Menlo,Consolas,monospace;background:var(--code-bg);
+    color:var(--accent);padding:6px 9px;border-radius:8px;display:block;flex:1;min-width:0;
+    overflow-wrap:anywhere;border:1px solid var(--line);
+  }
+  .copy{
+    flex:none;border:1px solid var(--line);background:var(--card);color:var(--muted);
+    border-radius:8px;height:32px;min-width:32px;padding:0 8px;font-size:12px;cursor:pointer;display:none;
+  }
+  .js .copy{display:inline-block}
+  .copy.done{color:var(--ok);border-color:var(--ok)}
+  .cmd p{margin:6px 0 0;color:var(--muted);font-size:14px}
+  .badge{display:inline-block;font-size:11px;font-weight:700;color:var(--star);background:var(--star-soft);padding:1px 7px;border-radius:999px;margin-right:4px;vertical-align:1px}
+  .ps{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:1px 7px;border-radius:999px;margin-right:4px;vertical-align:1px}
+  .proc{background:linear-gradient(135deg,var(--accent-soft),var(--card));border:1px solid var(--line);border-radius:16px;padding:16px}
+  .proc h2{margin:0 0 4px;font-size:17px}
+  .proc > p{margin:0 0 12px;color:var(--muted);font-size:14px}
+  ol.steps{margin:0;padding:0;list-style:none;counter-reset:s}
+  ol.steps li{counter-increment:s;position:relative;padding:0 0 14px 40px}
+  ol.steps li:last-child{padding-bottom:0}
+  ol.steps li::before{
+    content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;
+    background:var(--accent);color:#fff;font-weight:700;font-size:14px;display:grid;place-items:center;
+  }
+  ol.steps li:not(:last-child)::after{content:"";position:absolute;left:13.5px;top:30px;bottom:2px;width:1px;background:var(--line)}
+  ol.steps b{display:block;margin-bottom:4px}
+  ol.steps code{display:inline-block;margin:2px 0}
+  .warn{margin-top:12px;font-size:13px;color:var(--muted);border-left:3px solid var(--star);padding:4px 0 4px 10px}
+  .empty{display:none;text-align:center;color:var(--muted);padding:30px 0}
+  .hide{display:none!important}
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:26px}
+  kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--card)}
+</style>
 </head>
 <body>
-    <h1>Bienvenue sur ma WebApp !</h1>
-    <p>Cette application peut être installée sur votre écran d'accueil.</p>
 
-    <script>
+<script>
         // Enregistrement du Service Worker pour rendre l'app installable et gérable hors-ligne
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -25,5 +116,199 @@
             });
         }
     </script>
+
+<header>
+  <h1><span class="logo"><i></i><i></i><i></i><i></i></span>Commandes Windows</h1>
+  <p class="sub">Mémo administrateur</p>
+  <input class="search" id="q" type="search" placeholder="Rechercher (ex. dns, bitlocker, gpo)…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <nav class="chips">
+    <a class="chip" href="#maj">Migration W11</a>
+    <a class="chip" href="#info">Infos</a>
+    <a class="chip" href="#repar">Réparation</a>
+    <a class="chip" href="#disque">Disques</a>
+    <a class="chip" href="#reseau">Réseau</a>
+    <a class="chip" href="#domaine">Domaine</a>
+    <a class="chip" href="#process">Services</a>
+    <a class="chip" href="#maj-log">Mises à jour</a>
+    <a class="chip" href="#consoles">Consoles</a>
+  </nav>
+</header>
+
+<main>
+
+<section id="maj" class="proc-wrap">
+  <div class="proc">
+    <h2>Mise à niveau Windows 10 → 11</h2>
+    <p>Mise à niveau en place, conservant applications et fichiers.</p>
+    <ol class="steps">
+      <li><b>Vérifier UEFI, Secure Boot et TPM</b><code>msinfo32</code> <code>tpm.msc</code></li>
+      <li><b>Si le mode BIOS est « Hérité », convertir en GPT</b><code>mbr2gpt /validate /allowFullOS</code><br><code>mbr2gpt /convert /allowFullOS</code><br>Puis activer UEFI et Secure Boot dans le BIOS Dell (<kbd>F2</kbd>).</li>
+      <li><b>Suspendre BitLocker</b><code>manage-bde -protectors -disable C:</code></li>
+      <li><b>Assainir l'image Windows</b><code>DISM /Online /Cleanup-Image /RestoreHealth</code><br><code>sfc /scannow</code></li>
+      <li><b>Lancer l'installation depuis Windows</b>Monter l'ISO ou ouvrir la clé, puis exécuter <code>setup.exe</code> et choisir « Conserver les fichiers personnels et les applications ».</li>
+    </ol>
+    <p class="warn">Démarrer sur la clé USB ne permet qu'une installation propre : l'option de mise à niveau n'y est pas proposée.</p>
+  </div>
+</section>
+
+<section id="info">
+<details open>
+  <summary><span class="ico">ℹ️</span>Informations système<span class="n">6</span></summary>
+  <div class="list">
+    <div class="cmd"><div class="row"><code>msinfo32</code><button class="copy">Copier</button></div><p>Mode BIOS (UEFI/Hérité), état du Secure Boot, modèle, version du BIOS.</p></div>
+    <div class="cmd"><div class="row"><code>winver</code><button class="copy">Copier</button></div><p>Version et numéro de build de Windows.</p></div>
+    <div class="cmd"><div class="row"><code>systeminfo</code><button class="copy">Copier</button></div><p>Résumé complet : OS, date d'installation, correctifs, mémoire.</p></div>
+    <div class="cmd"><div class="row"><code>tpm.msc</code><button class="copy">Copier</button></div><p>Présence, état et version du TPM.</p></div>
+    <div class="cmd"><div class="row"><code>whoami /all</code><button class="copy">Copier</button></div><p>Utilisateur courant, groupes et privilèges. <code style="display:inline;padding:1px 5px">hostname</code> pour le nom du poste.</p></div>
+    <div class="cmd"><div class="row"><code>Get-CimInstance Win32_BIOS</code><button class="copy">Copier</button></div><p><span class="ps">PS</span>Numéro de série (Service Tag Dell) et version du BIOS. Remplace <code style="display:inline;padding:1px 5px">wmic bios get serialnumber</code>, déprécié.</p></div>
+  </div>
+</details>
+</section>
+
+<section id="repar">
+<details open>
+  <summary><span class="ico">🛠️</span>Réparation et intégrité<span class="n">5</span></summary>
+  <div class="list">
+    <div class="cmd"><div class="row"><code>DISM /Online /Cleanup-Image /RestoreHealth</code><button class="copy">Copier</button></div><p>Répare l'image Windows. À lancer avant sfc si celui-ci échoue.</p></div>
+    <div class="cmd"><div class="row"><code>sfc /scannow</code><button class="copy">Copier</button></div><p>Vérifie et répare les fichiers système protégés.</p></div>
+    <div class="cmd"><div class="row"><code>chkdsk C: /f /r</code><button class="copy">Copier</button></div><p>Vérifie le disque et récupère les secteurs défectueux (planifié au redémarrage pour C:).</p></div>
+    <div class="cmd"><div class="row"><code>bcdedit /enum</code><button class="copy">Copier</button></div><p>Affiche la configuration de démarrage. <code style="display:inline;padding:1px 5px">bcdboot C:\Windows</code> la reconstruit.</p></div>
+    <div class="cmd"><div class="row"><code>reagentc /info</code><button class="copy">Copier</button></div><p>État de l'environnement de récupération WinRE.</p></div>
+  </div>
+</details>
+</section>
+
+<section id="disque">
+<details open>
+  <summary><span class="ico">💽</span>Disques et partitions<span class="n">6</span></summary>
+  <div class="list">
+    <div class="cmd"><div class="row"><code>diskpart</code><button class="copy">Copier</button></div><p>Gestion des disques. <code style="display:inline;padding:1px 5px">list disk</code> : un * dans la colonne GPT indique un disque GPT.</p></div>
+    <div class="cmd"><div class="row"><code>mbr2gpt /validate /allowFullOS</code><button class="copy">Copier</button></div><p>Vérifie si la conversion MBR → GPT est possible.</p></div>
+    <div class="cmd"><div class="row"><code>mbr2gpt /convert /allowFullOS</code><button class="copy">Copier</button></div><p>Convertit le disque système en GPT sans perte de données.</p></div>
+    <div class="cmd"><div class="row"><code>manage-bde -status</code><button class="copy">Copier</button></div><p>État du chiffrement BitLocker des volumes.</p></div>
+    <div class="cmd"><div class="row"><code>manage-bde -protectors -disable C:</code><button class="copy">Copier</button></div><p>Suspend BitLocker jusqu'au prochain redémarrage (avant BIOS/mise à niveau).</p></div>
+    <div class="cmd"><div class="row"><code>cleanmgr</code><button class="copy">Copier</button></div><p>Nettoyage de disque, utile pour libérer de l'espace avant une mise à niveau.</p></div>
+  </div>
+</details>
+</section>
+
+<section id="reseau">
+<details open>
+  <summary><span class="ico">🌐</span>Réseau<span class="n">9</span></summary>
+  <div class="list">
+    <div class="cmd"><div class="row"><code>ipconfig /all</code><button class="copy">Copier</button></div><p>Configuration IP complète, adresse MAC, DNS, DHCP.</p></div>
+    <div class="cmd"><div class="row"><code>ipconfig /flushdns</code><button class="copy">Copier</button></div><p>Vide le cache DNS local.</p></div>
+    <div class="cmd"><div class="row"><code>ipconfig /release &amp;&amp; ipconfig /renew</code><button class="copy">Copier</button></div><p>Libère puis renouvelle le bail DHCP.</p></div>
+    <div class="cmd"><div class="row"><code>ping -t hôte</code><button class="copy">Copier</button></div><p>Test de connectivité continu (<kbd>Ctrl</kbd>+<kbd>C</kbd> pour arrêter).</p></div>
+    <div class="cmd"><div class="row"><code>tracert hôte</code><button class="copy">Copier</button></div><p>Trace la route. <code style="display:inline;padding:1px 5px">pathping</code> ajoute les pertes par saut.</p></div>
+    <div class="cmd"><div class="row"><code>nslookup nom</code><button class="copy">Copier</button></div><p>Interroge le DNS pour un nom ou une adresse.</p></div>
+    <div class="cmd"><div class="row"><code>netstat -ano</code><button class="copy">Copier</button></div><p>Connexions et ports ouverts avec le PID associé.</p></div>
+    <div class="cmd"><div class="row"><code>Test-NetConnection hôte -Port 443</code><button class="copy">Copier</button></div><p><span class="ps">PS</span>Teste l'ouverture d'un port TCP.</p></div>
+    <div class="cmd"><div class="row"><code>route print</code><button class="copy">Copier</button></div><p>Table de routage. <code style="display:inline;padding:1px 5px">arp -a</code> pour la table ARP.</p></div>
+  </div>
+</details>
+</section>
+
+<section id="domaine">
+<details open>
+  <summary><span class="ico">🏢</span>Domaine, GPO et comptes<span class="n">6</span></summary>
+  <div class="list">
+    <div class="cmd"><div class="row"><code>gpupdate /force</code><button class="copy">Copier</button></div><p>Applique immédiatement les stratégies de groupe.</p></div>
+    <div class="cmd"><div class="row"><code>gpresult /r</code><button class="copy">Copier</button></div><p>GPO appliquées au poste et à l'utilisateur. <code style="display:inline;padding:1px 5px">/h rapport.html</code> pour un rapport.</p></div>
+    <div class="cmd"><div class="row"><code>nltest /dsgetdc:domaine</code><button class="copy">Copier</button></div><p>Contrôleur de domaine utilisé par le poste.</p></div>
+    <div class="cmd"><div class="row"><code>dsregcmd /status</code><button class="copy">Copier</button></div><p>État de jonction Entra ID (Azure AD) et hybride.</p></div>
+    <div class="cmd"><div class="row"><code>net user</code><button class="copy">Copier</button></div><p>Liste les comptes locaux. <code style="display:inline;padding:1px 5px">net user nom /domain</code> pour un compte du domaine.</p></div>
+    <div class="cmd"><div class="row"><code>net localgroup administrators</code><button class="copy">Copier</button></div><p>Membres du groupe Administrateurs local.</p></div>
+  </div>
+</details>
+</section>
+
+<section id="process">
+<details open>
+  <summary><span class="ico">⚙️</span>Processus, services, alimentation<span class="n">6</span></summary>
+  <div class="list">
+    <div class="cmd"><div class="row"><code>tasklist</code><button class="copy">Copier</button></div><p>Liste des processus en cours avec leur PID.</p></div>
+    <div class="cmd"><div class="row"><code>taskkill /PID 1234 /F</code><button class="copy">Copier</button></div><p>Force l'arrêt d'un processus (ou <code style="display:inline;padding:1px 5px">/IM nom.exe</code>).</p></div>
+    <div class="cmd"><div class="row"><code>sc query nom_service</code><button class="copy">Copier</button></div><p>État d'un service. <code style="display:inline;padding:1px 5px">net start</code> / <code style="display:inline;padding:1px 5px">net stop</code> pour le piloter.</p></div>
+    <div class="cmd"><div class="row"><code>shutdown /r /t 0</code><button class="copy">Copier</button></div><p>Redémarrage immédiat.</p></div>
+    <div class="cmd"><div class="row"><code>shutdown /r /fw /t 0</code><button class="copy">Copier</button></div><p>Redémarre directement dans le firmware UEFI (BIOS).</p></div>
+    <div class="cmd"><div class="row"><code>powercfg /batteryreport</code><button class="copy">Copier</button></div><p>Rapport d'usure de batterie (portables). <code style="display:inline;padding:1px 5px">/energy</code> pour un diagnostic énergie.</p></div>
+  </div>
+</details>
+</section>
+
+<section id="maj-log">
+<details open>
+  <summary><span class="ico">🔄</span>Mises à jour et logiciels<span class="n">4</span></summary>
+  <div class="list">
+    <div class="cmd"><div class="row"><code>winget upgrade --all</code><button class="copy">Copier</button></div><p>Met à jour toutes les applications gérées par winget.</p></div>
+    <div class="cmd"><div class="row"><code>winget list</code><button class="copy">Copier</button></div><p>Inventaire des logiciels installés.</p></div>
+    <div class="cmd"><div class="row"><code>UsoClient StartScan</code><button class="copy">Copier</button></div><p>Déclenche une recherche Windows Update.</p></div>
+    <div class="cmd"><div class="row"><code>wusa /uninstall /kb:1234567</code><button class="copy">Copier</button></div><p>Désinstalle un correctif identifié par son numéro KB.</p></div>
+  </div>
+</details>
+</section>
+
+<section id="consoles">
+<details open>
+  <summary><span class="ico">🪟</span>Consoles (Win + R)<span class="n">11</span></summary>
+  <div class="list">
+    <div class="cmd"><div class="row"><code>appwiz.cpl</code><button class="copy">Copier</button></div><p>Programmes et fonctionnalités.</p></div>
+    <div class="cmd"><div class="row"><code>ncpa.cpl</code><button class="copy">Copier</button></div><p>Connexions réseau (cartes).</p></div>
+    <div class="cmd"><div class="row"><code>sysdm.cpl</code><button class="copy">Copier</button></div><p>Propriétés système : nom du poste, domaine, variables d'environnement.</p></div>
+    <div class="cmd"><div class="row"><code>devmgmt.msc</code><button class="copy">Copier</button></div><p>Gestionnaire de périphériques.</p></div>
+    <div class="cmd"><div class="row"><code>diskmgmt.msc</code><button class="copy">Copier</button></div><p>Gestion des disques.</p></div>
+    <div class="cmd"><div class="row"><code>compmgmt.msc</code><button class="copy">Copier</button></div><p>Gestion de l'ordinateur (tout-en-un).</p></div>
+    <div class="cmd"><div class="row"><code>services.msc</code><button class="copy">Copier</button></div><p>Services Windows.</p></div>
+    <div class="cmd"><div class="row"><code>eventvwr.msc</code><button class="copy">Copier</button></div><p>Observateur d'événements.</p></div>
+    <div class="cmd"><div class="row"><code>taskschd.msc</code><button class="copy">Copier</button></div><p>Planificateur de tâches.</p></div>
+    <div class="cmd"><div class="row"><code>lusrmgr.msc</code><button class="copy">Copier</button></div><p>Utilisateurs et groupes locaux (éditions Pro et supérieures).</p></div>
+    <div class="cmd"><div class="row"><code>control printers</code><button class="copy">Copier</button></div><p>Périphériques et imprimantes.</p></div>
+  </div>
+</details>
+</section>
+
+<p class="empty" id="empty">Aucune commande ne correspond.</p>
+<footer>Ouvrir une invite <b>administrateur</b> : <kbd>Win</kbd> + <kbd>X</kbd> → Terminal (administrateur)</footer>
+</main>
+
+<script>
+(function(){
+  document.documentElement.classList.add('js');
+  var q=document.getElementById('q'), empty=document.getElementById('empty');
+  var hdr=document.querySelector('header');
+  document.querySelectorAll('.chips a').forEach(function(a){
+    a.addEventListener('click',function(e){
+      var t=document.querySelector(a.getAttribute('href')); if(!t) return;
+      e.preventDefault();
+      if(q.value){q.value='';q.dispatchEvent(new Event('input'));}
+      var d=t.querySelector('details'); if(d) d.open=true;
+      var y=t.getBoundingClientRect().top+window.pageYOffset-hdr.offsetHeight-12;
+      window.scrollTo({top:Math.max(0,y),behavior:'smooth'});
+    });
+  });
+  var cmds=[].slice.call(document.querySelectorAll('.cmd'));
+  var secs=[].slice.call(document.querySelectorAll('section'));
+  function norm(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+  cmds.forEach(function(c){c._t=norm(c.textContent);});
+  q.addEventListener('input',function(){
+    var v=norm(q.value.trim()), any=false;
+    cmds.forEach(function(c){var m=!v||c._t.indexOf(v)>-1;c.classList.toggle('hide',!m);});
+    secs.forEach(function(s){
+      if(s.id==='maj'){var h=!!v;s.classList.toggle('hide',h);return;}
+      var vis=s.querySelectorAll('.cmd:not(.hide)').length;
+      s.classList.toggle('hide',!vis); if(vis){any=true; if(v) s.querySelector('details').open=true;}
+    });
+    empty.style.display=any?'none':'block';
+  });
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('.copy'); if(!b) return;
+    var t=b.parentNode.querySelector('code').textContent;
+    function ok(){b.textContent='✓';b.classList.add('done');setTimeout(function(){b.textContent='Copier';b.classList.remove('done');},1400);}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,fallback);}else fallback();
+    function fallback(){var ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,t.length);try{document.execCommand('copy');ok();}catch(_){}document.body.removeChild(ta);}
+  });
+})();
+</script>
 </body>
 </html>
